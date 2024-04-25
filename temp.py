@@ -8,11 +8,6 @@ async def help_command(update, context):
         "Чем я могу быть полезен?")
 
 
-async def make_an_appointment(update, context):
-    await update.message.reply_text(
-        "Записываю вас в нашу базу.")
-
-
 async def contact(update, context):
     await update.message.reply_text("Связываю вас с администратором")
 
