@@ -3,8 +3,9 @@ from telegram.ext import Application, MessageHandler, filters, ConversationHandl
 from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup
 from telegram import ReplyKeyboardRemove
-#from data import db_session
+from data import db_session
 from config import BOT_TOKEN
+from data.problem import Problem
 from dispatcher import User, Dispatcher
 
 logging.basicConfig(
@@ -64,27 +65,19 @@ async def echo(update, context):
         elif disp.users[id_user].state == 3:
             address = update.message.text
             disp.users[id_user].address = address
-            disp.users[id_user].state = 3
+            disp.users[id_user].state = 4
             print(disp.users[id_user].address)
+            reply_keyboard = [['/viewing', '/send'],
+                              ['/change']]
+            markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
             await update.message.reply_text(
-                "Черновик заявки принят, выберите нужное действие.",
+                "Черновик заявки принят, выберите нужное действие.\nВыбирите действие",
+                reply_markup=markup
             )
+
         else:
             await update.message.reply_text(
             "Что то пошло не так, введите команду \start.")
-
-
-
-
-
-async def check(update, context):
-    reply_keyboard = [['/viewing', '/send'],
-                      ['/change']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
-    await update.message.reply_text(
-        "Выбирите действие",
-        reply_markup=markup
-    )
 
 
 async def viewing(update, context):
@@ -94,6 +87,14 @@ async def viewing(update, context):
 
 
 async def send(update, context):
+    id_user = update["message"]["from_user"]["id"]
+    db_sess = db_session.create_session()
+    problem = Problem()
+    problem.fio = disp.users[id_user].fio
+    problem.content = disp.users[id_user].problem
+    problem.adress = disp.users[id_user].address
+    db_sess.add(problem)
+    db_sess.commit()
     await update.message.reply_text(
         "Ваша заявка успешно отправлена!")
 
@@ -117,12 +118,12 @@ def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("submit_your_application", submit_your_application))
-
+    application.add_handler(CommandHandler("send", send))
     application.add_handler(CommandHandler("close_keyboard", close_keyboard))
     text_handler = MessageHandler(filters.TEXT, echo)
     application.add_handler(text_handler)
-    #db_session.global_init("db/applications.db")
-    #db_sess = db_session.create_session()
+    db_session.global_init("db/applications.db")
+
     application.run_polling()
 
 
