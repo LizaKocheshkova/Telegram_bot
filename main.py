@@ -3,7 +3,7 @@ from telegram.ext import Application, MessageHandler, filters, ConversationHandl
 from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup
 from telegram import ReplyKeyboardRemove
-from data import db_session
+#from data import db_session
 from config import BOT_TOKEN
 from dispatcher import User, Dispatcher
 
