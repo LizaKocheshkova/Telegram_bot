@@ -83,7 +83,7 @@ async def echo(update, context):
 async def viewing(update, context):
     id_user = update["message"]["from_user"]["id"]
     await update.message.reply_text(
-        f"от: {disp.users[id_user].fio}\n описание: {disp.users[id_user].problem}\nместо: {disp.users[id_user].address}")
+        f"от: {disp.users[id_user].fio}\nописание: {disp.users[id_user].problem}\nместо: {disp.users[id_user].address}")
 
 
 async def send(update, context):
@@ -119,6 +119,7 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("submit_your_application", submit_your_application))
     application.add_handler(CommandHandler("send", send))
+    application.add_handler(CommandHandler("viewing", viewing))
     application.add_handler(CommandHandler("close_keyboard", close_keyboard))
     text_handler = MessageHandler(filters.TEXT, echo)
     application.add_handler(text_handler)
