@@ -12,6 +12,7 @@ class User:
         self.problem = None
         self.address = None
         self.state = 0
+        self.update = False
 
 
 class Dispatcher:

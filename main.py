@@ -52,28 +52,55 @@ async def echo(update, context):
             fio = update.message.text
             disp.users[id_user].fio = fio
             disp.users[id_user].state = 2
-            print(disp.users[id_user].fio)
-            await update.message.reply_text(
-                "Ваше данные сохранены. Опишите проблемму!")
+            if disp.users[id_user].update:
+                disp.users[id_user].state = 4
+                disp.users[id_user].update = False
+                reply_keyboard = [['/viewing', '/send'],
+                                  ['/update']]
+                markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
+                await update.message.reply_text(
+                    "Черновик заявки принят, выберите нужное действие.\nВыбирите действие",
+                    reply_markup=markup)
+            else:
+                await update.message.reply_text(
+                    "Ваше данные сохранены. Опишите проблемму!")
         elif disp.users[id_user].state == 2:
             problem = update.message.text
             disp.users[id_user].problem = problem
             disp.users[id_user].state = 3
-            print(disp.users[id_user].problem)
-            await update.message.reply_text(
-                "Введите место, куда подойти для решение проблеммы.")
+            if disp.users[id_user].update:
+                disp.users[id_user].state = 4
+                disp.users[id_user].update = False
+                reply_keyboard = [['/viewing', '/send'],
+                                  ['/update']]
+                markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
+                await update.message.reply_text(
+                    "Черновик заявки принят, выберите нужное действие.\nВыбирите действие",
+                    reply_markup=markup)
+            else:
+                await update.message.reply_text(
+                    "Введите место, куда подойти для решение проблеммы.")
         elif disp.users[id_user].state == 3:
             address = update.message.text
             disp.users[id_user].address = address
             disp.users[id_user].state = 4
-            print(disp.users[id_user].address)
-            reply_keyboard = [['/viewing', '/send'],
-                              ['/change']]
-            markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
-            await update.message.reply_text(
-                "Черновик заявки принят, выберите нужное действие.\nВыбирите действие",
-                reply_markup=markup
-            )
+            if disp.users[id_user].update:
+                disp.users[id_user].state = 4
+                disp.users[id_user].update = False
+                reply_keyboard = [['/viewing', '/send'],
+                                  ['/update']]
+                markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
+                await update.message.reply_text(
+                    "Черновик заявки принят, выберите нужное действие.\nВыбирите действие",
+                    reply_markup=markup)
+            else:
+                reply_keyboard = [['/viewing', '/send'],
+                                  ['/update']]
+                markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
+                await update.message.reply_text(
+                    "Черновик заявки принят, выберите нужное действие.\nВыбирите действие",
+                    reply_markup=markup
+                )
 
         else:
             await update.message.reply_text(
@@ -99,12 +126,38 @@ async def send(update, context):
         "Ваша заявка успешно отправлена!")
 
 
-async def change(update, context):
-    await update.message.reply_text("Выбирите, что бы вы хотели изменить в своей заявке")
+async def update(update, context):
+    reply_keyboard = [['/update_fio', '/update_problem'],
+                      ['/update_address']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
+    await update.message.reply_text("Выбирите, что бы вы хотели изменить в своей заявке", reply_markup = markup)
 
 
-async def change(update, context):
-    pass
+
+async def update_fio(update, context):
+    id_user = update["message"]["from_user"]["id"]
+    disp.users[id_user].state = 1
+    disp.users[id_user].update = True
+    await update.message.reply_text(
+        "Введите новое имя"
+    )
+
+
+async def update_problem(update, context):
+    id_user = update["message"]["from_user"]["id"]
+    disp.users[id_user].state = 2
+    disp.users[id_user].update = True
+    await update.message.reply_text(
+        "Опишите проблемму снова")
+
+
+async def update_address(update, context):
+    id_user = update["message"]["from_user"]["id"]
+    disp.users[id_user].state = 3
+    disp.users[id_user].update = True
+    await update.message.reply_text(
+        "Введите еще раз адрес",
+    )
 
 
 async def close_keyboard(update, context):
@@ -120,6 +173,10 @@ def main():
     application.add_handler(CommandHandler("submit_your_application", submit_your_application))
     application.add_handler(CommandHandler("send", send))
     application.add_handler(CommandHandler("viewing", viewing))
+    application.add_handler(CommandHandler("update", update))
+    application.add_handler(CommandHandler("update_fio", update_fio))
+    application.add_handler(CommandHandler("update_problem", update_problem))
+    application.add_handler(CommandHandler("update_address", update_address))
     application.add_handler(CommandHandler("close_keyboard", close_keyboard))
     text_handler = MessageHandler(filters.TEXT, echo)
     application.add_handler(text_handler)
