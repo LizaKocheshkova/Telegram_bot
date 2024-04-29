@@ -7,6 +7,7 @@ from data import db_session
 from config import BOT_TOKEN
 from data.problem import Problem
 from dispatcher import User, Dispatcher
+from table import create_table_problem
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -15,16 +16,29 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 disp = Dispatcher()
+ADMIN = [5054360906]
+
 
 
 async def start(update, context):
-    reply_keyboard = [['/submit_your_application']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
-    await update.message.reply_text(
-        "Привет. Я SysAdminBot.\n"
-        "С какой проблеммой вы пришли ко мне?",
-        reply_markup=markup
-    )
+    id_user = update["message"]["from_user"]["id"]
+    if id_user in ADMIN:
+        reply_keyboard = [['/view_active_problems'], ['/get_all_problems']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
+        await update.message.reply_text(
+            "Привет. Я SysAdminBot.\n"
+            "Выбирите действие!",
+            reply_markup=markup
+        )
+    else:
+        reply_keyboard = [['/submit_your_application']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
+        #await context.bot.send_message(chat_id=ADMIN[0], text='hello')
+        await update.message.reply_text(
+            "Привет. Я SysAdminBot.\n"
+            "С какой проблеммой вы пришли ко мне?",
+            reply_markup=markup
+        )
 
 
 async def submit_your_application(update, context):
@@ -122,16 +136,17 @@ async def send(update, context):
     problem.adress = disp.users[id_user].address
     db_sess.add(problem)
     db_sess.commit()
+    await context.bot.send_message(chat_id=ADMIN[0], text=f'Поступила заявка от {disp.users[id_user].fio}\n'
+                                                          f'Описание: {disp.users[id_user].problem}')
     await update.message.reply_text(
         "Ваша заявка успешно отправлена!")
 
 
-async def update(update, context):
+async def update_data(update, context):
     reply_keyboard = [['/update_fio', '/update_problem'],
                       ['/update_address']]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False, resize_keyboard=True)
-    await update.message.reply_text("Выбирите, что бы вы хотели изменить в своей заявке", reply_markup = markup)
-
+    await update.message.reply_text("Выбирите, что бы вы хотели изменить в своей заявке", reply_markup=markup)
 
 
 async def update_fio(update, context):
@@ -159,6 +174,27 @@ async def update_address(update, context):
         "Введите еще раз адрес",
     )
 
+async def view_problems(update, context):
+    id_user = update["message"]["from_user"]["id"]
+    if id_user in ADMIN:
+        await update.message.reply_text(
+            "Активные заявки")
+    else:
+        await update.message.reply_text(
+            "Недостаточно прав для просмотра заявок\nВведите команду /start для начала работы с ботом")
+
+async def get_problems(update, context):
+    id_user = update["message"]["from_user"]["id"]
+    if id_user in ADMIN:
+        create_table_problem()
+        await update.message.reply_text(
+            "Выгружаем все заявки")
+        await context.bot.send_document(chat_id=id_user, document=open("temp/problems.xlsx", "rb"))
+    else:
+        await update.message.reply_text(
+            "Недостаточно прав для просмотра заявок\nВведите команду /start для начала работы с ботом")
+
+
 
 async def close_keyboard(update, context):
     await update.message.reply_text(
@@ -173,11 +209,13 @@ def main():
     application.add_handler(CommandHandler("submit_your_application", submit_your_application))
     application.add_handler(CommandHandler("send", send))
     application.add_handler(CommandHandler("viewing", viewing))
-    application.add_handler(CommandHandler("update", update))
+    application.add_handler(CommandHandler("update", update_data))
     application.add_handler(CommandHandler("update_fio", update_fio))
     application.add_handler(CommandHandler("update_problem", update_problem))
     application.add_handler(CommandHandler("update_address", update_address))
     application.add_handler(CommandHandler("close_keyboard", close_keyboard))
+    application.add_handler(CommandHandler("view_active_problems", view_problems))
+    application.add_handler(CommandHandler("get_all_problems", get_problems))
     text_handler = MessageHandler(filters.TEXT, echo)
     application.add_handler(text_handler)
     db_session.global_init("db/applications.db")
