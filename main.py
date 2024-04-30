@@ -1,13 +1,17 @@
 import logging
-from telegram.ext import Application, MessageHandler, filters, ConversationHandler
-from telegram.ext import CommandHandler
+
 from telegram import ReplyKeyboardMarkup
 from telegram import ReplyKeyboardRemove
-from data import db_session
+from telegram.ext import Application, MessageHandler, filters
+from telegram.ext import CommandHandler
+
 from config import BOT_TOKEN
+from data import db_session
 from data.problem import Problem
 from dispatcher import User, Dispatcher
 from table import create_table_problem
+from jinja2 import Template
+from templates_messages import temp_mes
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -177,8 +181,10 @@ async def update_address(update, context):
 async def view_problems(update, context):
     id_user = update["message"]["from_user"]["id"]
     if id_user in ADMIN:
+        db_sess = db_session.create_session()
+        problems = db_sess.query(Problem).filter(Problem.status == False).all()
         await update.message.reply_text(
-            "Активные заявки")
+            Template(temp_mes).render(problems=problems))
     else:
         await update.message.reply_text(
             "Недостаточно прав для просмотра заявок\nВведите команду /start для начала работы с ботом")
