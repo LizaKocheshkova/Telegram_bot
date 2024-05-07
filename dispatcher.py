@@ -5,6 +5,7 @@ class User:
             2 - ввод проблеммы
             3 - ввод адреса
             4 - сохранение обращения
+    update: редактирование поля
     '''
     def __init__(self, id):
         self.id = id
@@ -18,7 +19,7 @@ class User:
 class Dispatcher:
     '''
     self.users {
-    key - id uset
+    key - id user
     value - User
     }
     '''

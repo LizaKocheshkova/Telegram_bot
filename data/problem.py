@@ -7,6 +7,7 @@ class Problem(SqlAlchemyBase):
     __tablename__ = 'problem'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    id_user = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     fio = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     adress = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     content = sqlalchemy.Column(sqlalchemy.String, nullable=True)
